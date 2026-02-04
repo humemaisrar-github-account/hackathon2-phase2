@@ -34,12 +34,12 @@ def register(user_data: Dict[str, Any], session: Session = Depends(get_session))
         db_user = UserService.create_user(session=session, email=email, password=password)
 
         # Create access token
-        access_token = UserService.create_access_token(data={"sub": db_user.id})
+        access_token = UserService.create_access_token(data={"sub": str(db_user.id)})
 
         return {
             "success": True,
             "user": {
-                "id": db_user.id,
+                "id": str(db_user.id),
                 "email": db_user.email
             },
             "access_token": access_token,
@@ -80,12 +80,12 @@ def login(credentials: Dict[str, Any], session: Session = Depends(get_session)) 
         )
 
     # Create access token
-    access_token = UserService.create_access_token(data={"sub": db_user.id})
+    access_token = UserService.create_access_token(data={"sub": str(db_user.id)})
 
     return {
         "success": True,
         "user": {
-            "id": db_user.id,
+            "id": str(db_user.id),
             "email": db_user.email
         },
         "access_token": access_token,
@@ -103,4 +103,44 @@ def logout() -> Dict[str, Any]:
     return {
         "success": True,
         "message": "Logged out successfully"
+    }
+
+
+@router.post("/auth/token")
+def get_token_from_email(credentials: Dict[str, Any], session: Session = Depends(get_session)) -> Dict[str, Any]:
+    """
+    Get JWT token based on email (used when user is authenticated via BetterAuth).
+
+    Args:
+        credentials: Dictionary containing email
+        session: Database session
+
+    Returns:
+        Dictionary with success status and JWT token
+    """
+    email = credentials.get("email")
+
+    if not email:
+        raise ValidationError("Email is required")
+
+    # Find user by email
+    db_user = UserService.get_user_by_email(session=session, email=email)
+
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Create access token
+    access_token = UserService.create_access_token(data={"sub": str(db_user.id)})
+
+    return {
+        "success": True,
+        "user": {
+            "id": str(db_user.id),
+            "email": db_user.email
+        },
+        "access_token": access_token,
+        "token_type": "bearer"
     }

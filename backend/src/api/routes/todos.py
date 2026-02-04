@@ -1,8 +1,9 @@
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, select
 from typing import List, Optional
 from datetime import datetime
-from src.models.todo import Todo, TodoBase, TodoCreate
+from src.models.todo import Todo, TodoBase, TodoCreate, TodoUpdate
 from src.models.user import User
 from src.database.database import get_session
 from src.api.middleware.auth_middleware import get_current_user
@@ -11,8 +12,58 @@ from src.services.todo_service import TodoService
 
 router = APIRouter()
 
-@router.get("/todos")
-def get_todos(
+@router.get("/{user_id}/tasks/{id}")
+def get_task(
+    user_id: str,
+    id: str,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+) -> dict:
+    """
+    Retrieve a specific task by ID for the specified user.
+
+    Args:
+        user_id: ID of the user whose task to retrieve
+        id: ID of the task to retrieve
+        session: Database session
+        current_user: Authenticated user requesting the task
+
+    Returns:
+        Dictionary with the requested task
+
+    Raises:
+        HTTPException: If task doesn't exist or user doesn't have access
+    """
+    # Verify the authenticated user matches the requested user_id
+    # Compare by converting both to string for consistent comparison
+    current_user_id_str = str(current_user.id)
+    user_id_str = str(user_id)
+    if current_user_id_str != user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot access another user's tasks"
+        )
+
+    try:
+        from src.services.todo_service import TodoService
+        db_todo = TodoService.get_todo_by_id(
+            session=session,
+            todo_id=id,
+            user=current_user
+        )
+        return {"task": db_todo}
+    except Exception as e:
+        if "NotFoundError" in str(type(e)) or "AuthorizationError" in str(type(e)):
+            from fastapi import HTTPException, status
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found or access denied"
+            )
+        raise e
+
+@router.get("/{user_id}/tasks")
+def get_tasks(
+    user_id: str,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
     page: int = Query(1, ge=1),
@@ -20,19 +71,30 @@ def get_todos(
     completed: Optional[bool] = Query(None)
 ) -> dict:
     """
-    Retrieve all todos for the authenticated user with pagination and optional filtering.
+    Retrieve all tasks for the specified user with pagination and optional filtering.
 
     Args:
+        user_id: ID of the user whose tasks to retrieve
         session: Database session
-        current_user: Authenticated user requesting todos
+        current_user: Authenticated user requesting tasks
         page: Page number for pagination
         limit: Number of items per page
         completed: Filter by completion status (optional)
 
     Returns:
-        Dictionary with todos and pagination info
+        Dictionary with tasks and pagination info
     """
-    todos, total_count = TodoService.get_user_todos(
+    # Verify the authenticated user matches the requested user_id
+    # Compare by converting both to string for consistent comparison
+    current_user_id_str = str(current_user.id)
+    user_id_str = str(user_id)
+    if current_user_id_str != user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot access another user's tasks"
+        )
+
+    tasks, total_count = TodoService.get_user_todos(
         session=session,
         user=current_user,
         completed=completed,
@@ -45,7 +107,7 @@ def get_todos(
     has_prev = page > 1
 
     return {
-        "todos": todos,
+        "tasks": tasks,
         "pagination": {
             "page": page,
             "limit": limit,
@@ -56,82 +118,118 @@ def get_todos(
         }
     }
 
-@router.post("/todos", status_code=status.HTTP_201_CREATED)
-def create_todo(
-    todo_data: TodoCreate,
+@router.post("/{user_id}/tasks", status_code=status.HTTP_201_CREATED)
+def create_task(
+    user_id: str,
+    task_data: TodoCreate,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ) -> dict:
     """
-    Create a new todo for the authenticated user.
+    Create a new task for the specified user.
 
     Args:
-        todo_data: Todo creation data (title, description, etc.) - user_id is auto-assigned
+        user_id: ID of the user for whom to create the task
+        task_data: Task creation data (title, description, etc.) - user_id is auto-assigned
         session: Database session
-        current_user: Authenticated user creating the todo
+        current_user: Authenticated user creating the task
 
     Returns:
-        Dictionary with created todo
+        Dictionary with created task
     """
-    db_todo = TodoService.create_todo(
+    # Verify the authenticated user matches the requested user_id
+    # Compare by converting both to string for consistent comparison
+    current_user_id_str = str(current_user.id)
+    user_id_str = str(user_id)
+    if current_user_id_str != user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot create tasks for another user"
+        )
+
+    db_task = TodoService.create_todo(
         session=session,
         user=current_user,
-        todo_data=todo_data
+        todo_data=task_data
     )
 
-    return {"todo": db_todo}
+    return {"task": db_task}
 
-@router.put("/todos/{id}")
-def update_todo(
+@router.put("/{user_id}/tasks/{id}")
+def update_task(
+    user_id: str,
     id: str,
-    todo_data: TodoBase,
+    task_data: TodoUpdate,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ) -> dict:
     """
-    Update an existing todo.
+    Update an existing task.
 
     Args:
-        id: ID of the todo to update
-        todo_data: Updated todo data
+        user_id: ID of the user whose task to update
+        id: ID of the task to update
+        task_data: Updated task data (excluding user_id)
         session: Database session
-        current_user: Authenticated user updating the todo
+        current_user: Authenticated user updating the task
 
     Returns:
-        Dictionary with updated todo
+        Dictionary with updated task
 
     Raises:
-        HTTPException: If todo doesn't exist or user doesn't have access
+        HTTPException: If task doesn't exist or user doesn't have access
     """
-    db_todo = TodoService.update_todo(
+    # Verify the authenticated user matches the requested user_id
+    # Compare by converting both to string for consistent comparison
+    current_user_id_str = str(current_user.id)
+    user_id_str = str(user_id)
+    if current_user_id_str != user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot update another user's tasks"
+        )
+
+    db_task = TodoService.update_todo(
         session=session,
         todo_id=id,
         user=current_user,
-        todo_data=todo_data
+        todo_data=task_data
     )
 
-    return {"todo": db_todo}
+    return {"task": db_task}
 
-@router.delete("/todos/{id}")
-def delete_todo(
+@router.delete("/{user_id}/tasks/{id}")
+def delete_task(
+    user_id: str,
     id: str,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ) -> dict:
     """
-    Delete a todo.
+    Delete a task.
 
     Args:
-        id: ID of the todo to delete
+        user_id: ID of the user whose task to delete
+        id: ID of the task to delete
         session: Database session
-        current_user: Authenticated user deleting the todo
+        current_user: Authenticated user deleting the task
 
     Returns:
         Dictionary with success message
 
     Raises:
-        HTTPException: If todo doesn't exist or user doesn't have access
+        HTTPException: If task doesn't exist or user doesn't have access
     """
+    # Verify the authenticated user matches the requested user_id
+    # Compare by converting both to string for consistent comparison
+    current_user_id_str = str(current_user.id)
+    user_id_str = str(user_id)
+    if current_user_id_str != user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot delete another user's tasks"
+        )
+
     success = TodoService.delete_todo(
         session=session,
         todo_id=id,
@@ -140,33 +238,45 @@ def delete_todo(
 
     return {
         "success": success,
-        "message": "Todo deleted successfully"
+        "message": "Task deleted successfully"
     }
 
-@router.patch("/todos/{id}/toggle-complete")
-def toggle_todo_complete(
+@router.patch("/{user_id}/tasks/{id}/complete")
+def toggle_task_complete(
+    user_id: str,
     id: str,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ) -> dict:
     """
-    Toggle the completion status of a todo.
+    Toggle the completion status of a task.
 
     Args:
-        id: ID of the todo to toggle
+        user_id: ID of the user whose task to toggle
+        id: ID of the task to toggle
         session: Database session
-        current_user: Authenticated user toggling the todo
+        current_user: Authenticated user toggling the task
 
     Returns:
-        Dictionary with updated todo
+        Dictionary with updated task
 
     Raises:
-        HTTPException: If todo doesn't exist or user doesn't have access
+        HTTPException: If task doesn't exist or user doesn't have access
     """
-    db_todo = TodoService.toggle_todo_completion(
+    # Verify the authenticated user matches the requested user_id
+    # Compare by converting both to string for consistent comparison
+    current_user_id_str = str(current_user.id)
+    user_id_str = str(user_id)
+    if current_user_id_str != user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot toggle another user's tasks"
+        )
+
+    db_task = TodoService.toggle_todo_completion(
         session=session,
         todo_id=id,
         user=current_user
     )
 
-    return {"todo": db_todo}
+    return {"task": db_task}

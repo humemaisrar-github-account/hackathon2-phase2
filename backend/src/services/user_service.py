@@ -67,7 +67,7 @@ class UserService:
         hashed_password = UserService.hash_password(password)
 
         # Create the new user
-        db_user = User(email=email, password_hash=hashed_password)
+        db_user = User(email=email, hashed_password=hashed_password)
         session.add(db_user)
         session.commit()
         session.refresh(db_user)
@@ -90,7 +90,7 @@ class UserService:
         # Find user in database
         db_user = session.exec(select(User).where(User.email == email)).first()
 
-        if not db_user or not UserService.verify_password(password, db_user.password_hash):
+        if not db_user or not UserService.verify_password(password, db_user.hashed_password):
             return None
 
         return db_user

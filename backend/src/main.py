@@ -1,3 +1,5 @@
+import uuid
+from datetime import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.api.middleware.error_handler import ErrorHandler
@@ -15,10 +17,25 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
+        "http://localhost:3005",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
+        "http://127.0.0.1:3003",
+        "http://127.0.0.1:3004",
+        "http://127.0.0.1:3005",
+        "http://localhost:8000",  # For direct API testing
+        "http://127.0.0.1:8000"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
 )
 
 # Add global exception handler

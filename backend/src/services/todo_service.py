@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlmodel import Session, select
 from datetime import datetime
-from src.models.todo import Todo, TodoBase, TodoCreate
+from src.models.todo import Todo, TodoBase, TodoCreate, TodoUpdate
 from src.models.user import User
 from src.api.middleware.error_handler import AuthorizationError, NotFoundError
 
@@ -46,7 +46,7 @@ class TodoService:
         count_query = select(Todo).where(Todo.user_id == user.id)
         if completed is not None:
             count_query = count_query.where(Todo.is_completed == completed)
-        total_count = session.exec(count_query).count()
+        total_count = session.exec(count_query).all().__len__()
 
         return todos, total_count
 
@@ -105,7 +105,7 @@ class TodoService:
         return db_todo
 
     @staticmethod
-    def update_todo(session: Session, todo_id: str, user: User, todo_data: TodoBase) -> Todo:
+    def update_todo(session: Session, todo_id: str, user: User, todo_data: TodoUpdate) -> Todo:
         """
         Update a todo if the user owns it.
 
@@ -132,7 +132,8 @@ class TodoService:
 
         # Update todo with new data
         for field, value in todo_data.dict(exclude_unset=True).items():
-            setattr(db_todo, field, value)
+            if value is not None:  # Only update if the value is provided
+                setattr(db_todo, field, value)
 
         db_todo.updated_at = datetime.utcnow()
 

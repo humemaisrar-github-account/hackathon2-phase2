@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -X POST http://127.0.0.1:8000/api/d6bd82c0-6a82-4127-a46e-d11e4414b229/tasks -H \"Content-Type: application/json\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNmJkODJjMC02YTgyLTQxMjctYTQ2ZS1kMTFlNDQxNGIyMjkiLCJleHAiOjE3NzAxMzU5MzV9.NNi-5SuW0Robb9Vl94iriLivtt3ngZOGm5CI4rm9wGQ\" -d \"{\"\"title\"\":\"\"Test Task\"\",\"\"description\"\":\"\"This is a test task\"\",\"\"is_completed\"\":false}\")",
+      "Bash(python debug_uuid.py)"
+    ]
+  }
+}

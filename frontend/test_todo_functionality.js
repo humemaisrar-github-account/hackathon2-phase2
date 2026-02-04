@@ -46,20 +46,22 @@ async function testTodoFunctionality() {
   try {
     const createResponse = await authApiClient.post('/api/todos', todoData);
 
-    if (createResponse.status === 200 && createResponse.data.id) {
-      console.log('✅ Todo created successfully');
-      console.log(`   Todo ID: ${createResponse.data.id}`);
-      console.log(`   Title: ${createResponse.data.title}`);
+    console.log(`Response Status: ${createResponse.status}`);
 
-      const todoId = createResponse.data.id;
+    if (createResponse.status === 201 && createResponse.data.todo && createResponse.data.todo.id) {
+      console.log('✅ Todo created successfully');
+      console.log(`   Todo ID: ${createResponse.data.todo.id}`);
+      console.log(`   Title: ${createResponse.data.todo.title}`);
+
+      const todoId = createResponse.data.todo.id;
 
       // Test 2: Get the created todo
       console.log('\n🔍 Testing todo retrieval...');
       const getResponse = await authApiClient.get(`/api/todos/${todoId}`);
 
-      if (getResponse.status === 200 && getResponse.data.id === todoId) {
+      if (getResponse.status === 200 && getResponse.data.todo && getResponse.data.todo.id === todoId) {
         console.log('✅ Todo retrieved successfully');
-        console.log(`   Retrieved title: ${getResponse.data.title}`);
+        console.log(`   Retrieved title: ${getResponse.data.todo.title}`);
 
         // Test 3: Get all todos for the user
         console.log('\n📚 Testing todo list retrieval...');
@@ -78,17 +80,18 @@ async function testTodoFunctionality() {
 
           const updateResponse = await authApiClient.put(`/api/todos/${todoId}`, updateData);
 
-          if (updateResponse.status === 200 && updateResponse.data.id === todoId) {
+          if (updateResponse.status === 200 && updateResponse.data.todo && updateResponse.data.todo.id === todoId) {
             console.log('✅ Todo updated successfully');
-            console.log(`   Updated title: ${updateResponse.data.title}`);
-            console.log(`   Is completed: ${updateResponse.data.is_completed}`);
+            console.log(`   Updated title: ${updateResponse.data.todo.title}`);
+            console.log(`   Is completed: ${updateResponse.data.todo.is_completed}`);
 
             // Test 5: Toggle todo completion status
             console.log('\n🔄 Testing todo completion toggle...');
             const toggleResponse = await authApiClient.patch(`/api/todos/${todoId}/toggle-complete`);
 
-            if (toggleResponse.status === 200) {
+            if (toggleResponse.status === 200 && toggleResponse.data.todo) {
               console.log('✅ Todo completion toggled successfully');
+              console.log(`   New completion status: ${toggleResponse.data.todo.is_completed}`);
 
               // Test 6: Delete the todo
               console.log('\n🗑️  Testing todo deletion...');
@@ -100,7 +103,7 @@ async function testTodoFunctionality() {
                 console.log('\n🎉 All todo functionality tests passed!');
                 console.log('\n📋 Summary:');
                 console.log('   • User authentication works correctly');
-                console.log('   • Todo creation works correctly');
+                console.log('   • Todo creation works correctly (status 201)');
                 console.log('   • Todo retrieval works correctly');
                 console.log('   • Todo list retrieval works correctly');
                 console.log('   • Todo update works correctly');
@@ -131,14 +134,14 @@ async function testTodoFunctionality() {
     } else {
       console.log('❌ Todo creation failed');
       console.log(`   Status: ${createResponse.status}`);
-      console.log(`   Response: ${JSON.stringify(createResponse.data)}`);
+      console.log(`   Response: ${JSON.stringify(createResponse.data, null, 2)}`);
       return false;
     }
   } catch (error) {
     console.log('❌ Todo operation failed');
     console.error(`   Error: ${error.message}`);
     if (error.response) {
-      console.error(`   Response: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+      console.error(`   Response: ${error.response.status} - ${JSON.stringify(error.response.data, null, 2)}`);
     }
     return false;
   }
