@@ -3,6 +3,7 @@ from sqlmodel import Session, select
 from datetime import datetime, timedelta
 import bcrypt
 import jwt
+import uuid
 from src.models.user import User
 from src.config import Config
 from src.api.middleware.error_handler import ValidationError
@@ -35,7 +36,7 @@ class UserService:
         return encoded_jwt
 
     @staticmethod
-    def create_user(session: Session, email: str, password: str) -> User:
+    def create_user(session: Session, email: str, password: str, skip_password_validation: bool = False) -> User:
         """
         Create a new user with the given email and password.
 
@@ -43,6 +44,7 @@ class UserService:
             session: Database session
             email: User's email address
             password: Plain password to hash
+            skip_password_validation: Whether to skip password strength validation (for auto-created users)
 
         Returns:
             The created User object
@@ -59,8 +61,8 @@ class UserService:
         if existing_user:
             raise ValidationError("Email already registered")
 
-        # Validate password strength
-        if len(password) < 8:
+        # Validate password strength unless explicitly skipped
+        if not skip_password_validation and len(password) < 8:
             raise ValidationError("Password must be at least 8 characters long")
 
         # Hash the password
@@ -73,6 +75,22 @@ class UserService:
         session.refresh(db_user)
 
         return db_user
+
+    @staticmethod
+    def create_user_auto(session: Session, email: str) -> User:
+        """
+        Create a user with a temporary password for auto-syncing with BetterAuth.
+
+        Args:
+            session: Database session
+            email: User's email address
+
+        Returns:
+            The created User object
+        """
+        # Generate a temporary password for backend DB (won't be used since we're using BetterAuth)
+        temp_password = "auto_generated_" + str(uuid.uuid4())[:12]
+        return UserService.create_user(session=session, email=email, password=temp_password, skip_password_validation=True)
 
     @staticmethod
     def authenticate_user(session: Session, email: str, password: str) -> Optional[User]:

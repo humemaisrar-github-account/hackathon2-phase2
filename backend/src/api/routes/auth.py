@@ -126,11 +126,9 @@ def get_token_from_email(credentials: Dict[str, Any], session: Session = Depends
     # Find user by email
     db_user = UserService.get_user_by_email(session=session, email=email)
 
+    # If user doesn't exist in our backend DB, create them (they were authenticated via BetterAuth)
     if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        db_user = UserService.create_user_auto(session=session, email=email)
 
     # Create access token
     access_token = UserService.create_access_token(data={"sub": str(db_user.id)})
