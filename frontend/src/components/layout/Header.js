@@ -120,28 +120,28 @@ export default function Header() {
               </div>
 
               {/* Mobile Auth Buttons */}
-              <div className="flex flex-col space-y-3 px-3">
+              <div className="border-t border-gray-200 pt-4 mt-2 px-3">
                 {isAuth ? (
-                  <div className="flex flex-col space-y-3">
-                    <span className="text-sm text-gray-700 px-3 py-2">
+                  <div className="flex flex-col space-y-4">
+                    <div className="text-center text-sm text-gray-700 py-2">
                       Welcome, {user?.email?.split('@')[0]}
-                    </span>
+                    </div>
                     <button
                       onClick={() => signOut()}
-                      className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm w-full"
+                      className="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 text-base w-full"
                     >
                       Sign Out
                     </button>
                   </div>
                 ) : (
-                  <div className="flex flex-col space-y-3">
+                  <div className="flex flex-col space-y-4">
                     <Link href="/auth/login">
-                      <span className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm cursor-pointer text-center w-full block">
+                      <span className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg transition-colors duration-200 text-base cursor-pointer text-center w-full block border border-gray-300">
                         Sign In
                       </span>
                     </Link>
                     <Link href="/auth/signup">
-                      <span className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm cursor-pointer text-center w-full block">
+                      <span className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 text-base cursor-pointer text-center w-full block shadow-md hover:shadow-lg">
                         Get Started
                       </span>
                     </Link>
