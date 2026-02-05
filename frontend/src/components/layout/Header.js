@@ -44,7 +44,7 @@ export default function Header() {
           </nav>
 
           {/* Right side - Auth buttons or user menu */}
-          <div className="flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-4">
             {isAuth ? (
               <div className="flex items-center space-x-4">
                 <span className="hidden md:block text-sm text-gray-700">
