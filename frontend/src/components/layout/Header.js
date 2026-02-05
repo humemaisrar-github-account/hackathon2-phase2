@@ -93,29 +93,61 @@ export default function Header() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
-            <div className="flex flex-col space-y-2">
-              <Link href="/">
-                <span className="text-gray-700 hover:text-blue-600 px-3 py-2 text-base font-medium cursor-pointer">
-                  Home
-                </span>
-              </Link>
-              <Link href="/#features">
-                <span className="text-gray-700 hover:text-blue-600 px-3 py-2 text-base font-medium cursor-pointer">
-                  Features
-                </span>
-              </Link>
-              <Link href="/#about">
-                <span className="text-gray-700 hover:text-blue-600 px-3 py-2 text-base font-medium cursor-pointer">
-                  About
-                </span>
-              </Link>
-              {isAuth && (
-                <Link href="/dashboard">
+            <div className="flex flex-col space-y-4">
+              <div className="flex flex-col space-y-2">
+                <Link href="/">
                   <span className="text-gray-700 hover:text-blue-600 px-3 py-2 text-base font-medium cursor-pointer">
-                    Dashboard
+                    Home
                   </span>
                 </Link>
-              )}
+                <Link href="/#features">
+                  <span className="text-gray-700 hover:text-blue-600 px-3 py-2 text-base font-medium cursor-pointer">
+                    Features
+                  </span>
+                </Link>
+                <Link href="/#about">
+                  <span className="text-gray-700 hover:text-blue-600 px-3 py-2 text-base font-medium cursor-pointer">
+                    About
+                  </span>
+                </Link>
+                {isAuth && (
+                  <Link href="/dashboard">
+                    <span className="text-gray-700 hover:text-blue-600 px-3 py-2 text-base font-medium cursor-pointer">
+                      Dashboard
+                    </span>
+                  </Link>
+                )}
+              </div>
+
+              {/* Mobile Auth Buttons */}
+              <div className="flex flex-col space-y-3 px-3">
+                {isAuth ? (
+                  <div className="flex flex-col space-y-3">
+                    <span className="text-sm text-gray-700 px-3 py-2">
+                      Welcome, {user?.email?.split('@')[0]}
+                    </span>
+                    <button
+                      onClick={() => signOut()}
+                      className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm w-full"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col space-y-3">
+                    <Link href="/auth/login">
+                      <span className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm cursor-pointer text-center w-full block">
+                        Sign In
+                      </span>
+                    </Link>
+                    <Link href="/auth/signup">
+                      <span className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm cursor-pointer text-center w-full block">
+                        Get Started
+                      </span>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
